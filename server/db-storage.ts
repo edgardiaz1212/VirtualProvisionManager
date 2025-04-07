@@ -217,13 +217,12 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getHypervisorByType(type: string): Promise<Hypervisor | undefined> {
-    const [hypervisor] = await db
+    const hypervisors_list = await db
       .select()
       .from(hypervisors)
-      .where(eq(hypervisors.type, type))
-      .where(eq(hypervisors.active, true));
+      .where(eq(hypervisors.type, type));
     
-    return hypervisor;
+    return hypervisors_list.find(h => h.active);
   }
   
   async createHypervisor(hypervisor: InsertHypervisor): Promise<Hypervisor> {

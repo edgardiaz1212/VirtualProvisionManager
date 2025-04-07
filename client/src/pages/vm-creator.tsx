@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Sidebar } from "@/components/ui/sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { HypervisorSelector } from "@/components/vm-creator/hypervisor-selector";
 import { PlanSelector } from "@/components/vm-creator/plan-selector";
@@ -12,6 +11,7 @@ import { Plan, predefinedPlans } from "@shared/schema";
 import { HypervisorType, VM_CREATION_STEPS } from "@/lib/constants";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Layout } from "@/components/layout/layout";
 
 export default function VmCreator() {
   const { toast } = useToast();
@@ -159,80 +159,69 @@ export default function VmCreator() {
   ];
 
   return (
-    <div className="h-screen flex overflow-hidden">
-      <Sidebar />
-      
-      <div className="flex flex-col w-0 flex-1 md:ml-64">
-        <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-100">
-          <div className="py-6">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8">
-              {/* Form container */}
-              <Card className="shadow overflow-hidden">
-                {/* Form header */}
-                <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">Virtual Machine Creation</h3>
-                  <p className="mt-1 text-sm text-gray-500">Configure and deploy new virtual machines to available hypervisors.</p>
-                </div>
-
-                {/* Progress bar */}
-                <ProgressStepper currentStep={steps.indexOf({ label: currentStep }) + 1} steps={steps} />
-
-                {/* Form content */}
-                <CardContent className="p-6">
-                  {currentStep === VM_CREATION_STEPS.HYPERVISOR && (
-                    <HypervisorSelector 
-                      selectedHypervisor={hypervisorType}
-                      onSelect={handleHypervisorSelect}
-                      onNext={goToNextStep}
-                    />
-                  )}
-
-                  {currentStep === VM_CREATION_STEPS.RESOURCES && (
-                    <PlanSelector 
-                      onPlanSelect={handlePlanSelect}
-                      onCustomConfigChange={handleCustomConfigChange}
-                      selectedPlan={selectedPlan}
-                      planType={planType}
-                      setPlanType={setPlanType}
-                      customConfig={customConfig}
-                      onNext={goToNextStep}
-                      onPrevious={goToPreviousStep}
-                    />
-                  )}
-
-                  {currentStep === VM_CREATION_STEPS.CONFIGURATION && hypervisorType && (
-                    <VmConfiguration 
-                      hypervisorType={hypervisorType}
-                      onNext={goToNextStep}
-                      onPrevious={goToPreviousStep}
-                      onFormSubmit={handleVmConfigSubmit}
-                      initialValues={vmConfig}
-                    />
-                  )}
-
-                  {currentStep === VM_CREATION_STEPS.REVIEW && hypervisorType && (
-                    <VmReview 
-                      hypervisorType={hypervisorType}
-                      planType={planType}
-                      selectedPlan={selectedPlan}
-                      customConfig={customConfig}
-                      vmConfig={vmConfig}
-                      onPrevious={goToPreviousStep}
-                      onSubmit={handleSubmit}
-                      isLoading={createVmMutation.isPending}
-                      isSuccess={createVmMutation.isSuccess}
-                      isError={createVmMutation.isError}
-                      errorMessage={createVmMutation.error?.message}
-                      onReset={handleReset}
-                      onRetry={handleRetry}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </main>
+    <Layout>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">Create Virtual Machine</h1>
+        <p className="text-muted-foreground mt-2">Configure and deploy a new virtual machine to available hypervisors.</p>
       </div>
-    </div>
+      
+      {/* Form container */}
+      <Card className="shadow-sm">
+        {/* Progress bar */}
+        <ProgressStepper currentStep={steps.indexOf({ label: currentStep }) + 1} steps={steps} />
+
+        {/* Form content */}
+        <CardContent className="p-6">
+          {currentStep === VM_CREATION_STEPS.HYPERVISOR && (
+            <HypervisorSelector 
+              selectedHypervisor={hypervisorType}
+              onSelect={handleHypervisorSelect}
+              onNext={goToNextStep}
+            />
+          )}
+
+          {currentStep === VM_CREATION_STEPS.RESOURCES && (
+            <PlanSelector 
+              onPlanSelect={handlePlanSelect}
+              onCustomConfigChange={handleCustomConfigChange}
+              selectedPlan={selectedPlan}
+              planType={planType}
+              setPlanType={setPlanType}
+              customConfig={customConfig}
+              onNext={goToNextStep}
+              onPrevious={goToPreviousStep}
+            />
+          )}
+
+          {currentStep === VM_CREATION_STEPS.CONFIGURATION && hypervisorType && (
+            <VmConfiguration 
+              hypervisorType={hypervisorType}
+              onNext={goToNextStep}
+              onPrevious={goToPreviousStep}
+              onFormSubmit={handleVmConfigSubmit}
+              initialValues={vmConfig}
+            />
+          )}
+
+          {currentStep === VM_CREATION_STEPS.REVIEW && hypervisorType && (
+            <VmReview 
+              hypervisorType={hypervisorType}
+              planType={planType}
+              selectedPlan={selectedPlan}
+              customConfig={customConfig}
+              vmConfig={vmConfig}
+              onPrevious={goToPreviousStep}
+              onSubmit={handleSubmit}
+              isLoading={createVmMutation.isPending}
+              isSuccess={createVmMutation.isSuccess}
+              isError={createVmMutation.isError}
+              errorMessage={createVmMutation.error?.message}
+              onReset={handleReset}
+              onRetry={handleRetry}
+            />
+          )}
+        </CardContent>
+      </Card>
+    </Layout>
   );
 }
