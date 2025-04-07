@@ -5,7 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plan, predefinedPlans } from "@shared/schema";
 import { cn } from "@/lib/utils";
-import { Server, HardDrive, MemoryStick } from "lucide-react";
+import { Server, HardDrive, MemoryStick, Cpu } from "lucide-react";
 
 interface PlanSelectorProps {
   onPlanSelect: (plan: Plan | null) => void;
