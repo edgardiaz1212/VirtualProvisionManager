@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -33,6 +33,22 @@ export function PlanSelector({
   onNext,
   onPrevious
 }: PlanSelectorProps) {
+  // Set initial default values for custom configuration if they're empty
+  useEffect(() => {
+    if (planType === "custom" && 
+        (customConfig.ram === "" || 
+         customConfig.cpuCores === "" || 
+         customConfig.diskSize === "")) {
+      // Set default values if not set
+      onCustomConfigChange({
+        ram: customConfig.ram || "4 GB",
+        cpuCores: customConfig.cpuCores || "2",
+        diskSize: customConfig.diskSize || "40 GB",
+        diskType: customConfig.diskType
+      });
+    }
+  }, [planType, customConfig, onCustomConfigChange]);
+
   // Validation for next button
   const isValid = () => {
     if (planType === "cataloged") {
@@ -134,7 +150,6 @@ export function PlanSelector({
                   <SelectValue placeholder="Select RAM" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select RAM</SelectItem>
                   <SelectItem value="1 GB">1 GB</SelectItem>
                   <SelectItem value="2 GB">2 GB</SelectItem>
                   <SelectItem value="4 GB">4 GB</SelectItem>
@@ -156,7 +171,6 @@ export function PlanSelector({
                   <SelectValue placeholder="Select CPU Cores" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select CPU Cores</SelectItem>
                   <SelectItem value="1">1 Core</SelectItem>
                   <SelectItem value="2">2 Cores</SelectItem>
                   <SelectItem value="4">4 Cores</SelectItem>
@@ -177,7 +191,6 @@ export function PlanSelector({
                   <SelectValue placeholder="Select Disk Size" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Select Disk Size</SelectItem>
                   <SelectItem value="20 GB">20 GB</SelectItem>
                   <SelectItem value="40 GB">40 GB</SelectItem>
                   <SelectItem value="80 GB">80 GB</SelectItem>
