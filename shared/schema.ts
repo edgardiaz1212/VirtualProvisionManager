@@ -20,8 +20,11 @@ export const clients = pgTable("clients", {
 
 export const insertClientSchema = createInsertSchema(clients, {
   name: z.string().min(1, "Client name is required"),
+  contactName: z.string().optional().nullable(),
   email: z.string().email("Invalid email").optional().nullable(),
   phone: z.string().optional().nullable(),
+  department: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
 }).omit({ 
   id: true,
   createdAt: true,
