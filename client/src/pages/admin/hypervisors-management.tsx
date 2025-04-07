@@ -60,7 +60,7 @@ const hypervisorFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(1, "Password is required").optional(),
   apiToken: z.string().optional(),
-  useApiToken: z.boolean().default(false),
+  useApiToken: z.boolean().default(false).optional(),
   verifySSL: z.boolean().default(true),
   status: z.enum(["active", "inactive", "maintenance"]).default("active"),
   datacenter: z.string().optional(),
@@ -228,15 +228,15 @@ export default function HypervisorsManagement() {
     setSelectedHypervisor(hypervisor);
     editForm.reset({
       name: hypervisor.name,
-      type: hypervisor.type,
-      url: hypervisor.url,
-      username: hypervisor.username,
+      type: hypervisor.type as "proxmox" | "vcenter",
+      url: hypervisor.apiUrl,
+      username: hypervisor.username || "",
       password: "", // Don't set password for edit
       apiToken: "", // Don't set API token for edit
-      useApiToken: hypervisor.hasToken, // Set based on whether hypervisor has a token
-      verifySSL: hypervisor.verifySSL,
-      status: hypervisor.status,
-      datacenter: hypervisor.datacenter || "",
+      useApiToken: hypervisor.authType === "token", // Set based on auth type
+      verifySSL: true, // Default to true since it's not in the schema
+      status: hypervisor.active ? "active" : "inactive",
+      datacenter: hypervisor.version || "",
     });
     setIsEditHypervisorOpen(true);
   };
@@ -249,43 +249,63 @@ export default function HypervisorsManagement() {
 
   // Handle form submission for adding a hypervisor
   const onAddSubmit = (data: HypervisorFormValues) => {
-    // If using API token, remove password; if using password, remove API token
-    const submitData = { ...data };
-    if (submitData.useApiToken) {
-      delete submitData.password;
+    // Create a new object with only the properties we want to submit 
+    const { useApiToken, url, status, ...rest } = data;
+    
+    // Create the API request data with proper field names
+    const submitData = {
+      ...rest,
+      // Convert Form schema field names to API schema field names
+      apiUrl: url,
+      active: status === 'active',
+      authType: useApiToken ? "token" : "credentials",
+    };
+    
+    // Remove the credential we're not using
+    if (useApiToken) {
+      delete (submitData as any).password;
     } else {
-      delete submitData.apiToken;
+      delete (submitData as any).apiToken;
     }
-    delete submitData.useApiToken; // Remove useApiToken as it's not part of the schema
 
-    addHypervisorMutation.mutate(submitData);
+    addHypervisorMutation.mutate(submitData as any);
   };
 
   // Handle form submission for editing a hypervisor
   const onEditSubmit = (data: HypervisorFormValues) => {
     if (!selectedHypervisor) return;
     
-    // Prepare update data
-    const updateData = { ...data };
+    // Create a new object with only the properties we want to submit 
+    const { useApiToken, url, status, ...rest } = data;
     
-    // If using API token, remove password; if using password, remove API token
-    if (updateData.useApiToken) {
-      delete updateData.password;
+    // Create the API request data with proper field names
+    const updateData = {
+      ...rest,
+      // Convert Form schema field names to API schema field names
+      apiUrl: url,
+      active: status === 'active',
+      authType: useApiToken ? "token" : "credentials",
+    };
+    
+    // Remove credentials based on auth type
+    if (useApiToken) {
+      delete (updateData as any).password;
       // Only include API token if it was changed (not empty)
       if (!updateData.apiToken) {
-        delete updateData.apiToken;
+        delete (updateData as any).apiToken;
       }
     } else {
-      delete updateData.apiToken;
+      delete (updateData as any).apiToken;
       // Only include password if it was changed (not empty)
       if (!updateData.password) {
-        delete updateData.password;
+        delete (updateData as any).password;
       }
     }
     
-    delete updateData.useApiToken; // Remove useApiToken as it's not part of the schema
-    
-    updateHypervisorMutation.mutate({ id: selectedHypervisor.id, data: updateData });
+    updateHypervisorMutation.mutate({ 
+      id: selectedHypervisor.id, 
+      data: updateData as any 
+    });
   };
 
   // Handle testing a hypervisor connection
@@ -334,26 +354,22 @@ export default function HypervisorsManagement() {
                     <TableRow key={hypervisor.id}>
                       <TableCell className="font-medium">{hypervisor.name}</TableCell>
                       <TableCell className="capitalize">{hypervisor.type}</TableCell>
-                      <TableCell className="truncate max-w-xs">{hypervisor.url}</TableCell>
+                      <TableCell className="truncate max-w-xs">{hypervisor.apiUrl}</TableCell>
                       <TableCell>{hypervisor.username}</TableCell>
                       <TableCell>
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            hypervisor.status === "active"
+                            hypervisor.active
                               ? "bg-green-100 text-green-800"
-                              : hypervisor.status === "maintenance"
-                              ? "bg-yellow-100 text-yellow-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {hypervisor.status === "active" ? (
+                          {hypervisor.active ? (
                             <Check className="mr-1 h-3 w-3" />
-                          ) : hypervisor.status === "maintenance" ? (
-                            <Wrench className="mr-1 h-3 w-3" />
                           ) : (
                             <X className="mr-1 h-3 w-3" />
                           )}
-                          {hypervisor.status.charAt(0).toUpperCase() + hypervisor.status.slice(1)}
+                          {hypervisor.active ? "Active" : "Inactive"}
                         </span>
                       </TableCell>
                       <TableCell className="text-right space-x-1">
